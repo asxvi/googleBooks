@@ -1,7 +1,10 @@
 import requests
 import pandas as pd
 import json
+from dotenv import load_dotenv
 
+
+load_dotenv()       # load .env
 
 def printData():
     print(f"isbn: {isbn}")
@@ -19,7 +22,7 @@ def printData():
     print(f"selfLink: {selfLink}")
     print("\n")
 
-myKey = "AIzaSyCv96E3WC4c1cycIyp0ywBzLihuM0BOVWE"
+myKey = "AIzaSyDirSZjmIfQTvYgCnUZ0BhbIlrKRF8qxHw"
 
 # define query #-- make function
 query = "data+engineering"
