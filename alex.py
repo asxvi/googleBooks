@@ -4,12 +4,15 @@ import json
 
 
 def printData():
+    print(f"isbn: {isbn}")
     print(f"Title: {title}")
-    print(f"Categories: {', ' .join(categories)}")
+    # print(f"Categories: {', ' .join(categories)}")
     print(f"Authors: {', ' .join(authors)}")
     print(f"Price: {price} {currencyType}")
     # print(f"Currency: {currencyType}")
     
+    print(f"date: {date}")
+    print(f"pageCount: {pageCount}")
     print(f"eBook: {isEbook}")
     print(f"epub: {isEpub}")
     print(f"pdf: {isPDF}")
@@ -18,7 +21,7 @@ def printData():
 
 myKey = "AIzaSyCv96E3WC4c1cycIyp0ywBzLihuM0BOVWE"
 
-# separate query with +
+# define query #-- make function
 query = "data+engineering"
 author = ""
 
@@ -30,51 +33,46 @@ if response.status_code == 200:
     data = response.json()
 
     # formatted as {kind, id, etag, selflink} and {volumeInfo/ , layerInfo/ , saleInfo/ , accessInfo/}
-    for item in data['items']:
+    for item in data.get('items', 'No data on Item'):
+        
         #.get() method is used to retrieve the value associated with a key in a dictionary.
         # Safer than direct index ([]) bc it allows default rv if key not present
-        selfLink = item.get('selfLink', {})
+        selfLink = item.get('selfLink', "N/A")
 
-        title = item['volumeInfo'].get('title', {"No Title info"})
-        authors = item['volumeInfo'].get('authors', {"No Author info"})
-        description = item['volumeInfo'].get('description', {})
+        # volumeInfo ** 
+         # struggling to flatten categories but want to add
+         
+        volumeInfo = item.get('volumeInfo', {})
 
+        title = volumeInfo.get('title', "N/A")
+        authors = volumeInfo.get('authors', [])
+        description = volumeInfo.get('description', "N/A")
+        date = volumeInfo.get('publishedDate', "N/A")
+        # categories = item.get('volumeInfo', {}).get('categories', {})
+        
+        industryIdentifier = volumeInfo.get('industryIdentifiers', [])
+        isbn = industryIdentifier[0].get('identifier', {}) 
 
-        # volume info ** 
-        # struggling to flatten categories but want to add
-        #categories = item.get('volumeInfo', {}).get('categories', {})
+        pageCount = volumeInfo.get('pageCount', None)
 
-        imageLinks = item['volumeInfo'].get('imageLinks', {})
-        smallImage = imageLinks.get('thumbnail', {})
-        largeImage = imageLinks.get('extraLarge', {})
+        imageLinks = volumeInfo.get('imageLinks', "N/A")
+        smallImage = imageLinks.get('thumbnail', "N/A")
+        largeImage = imageLinks.get('extraLarge', "N/A")
 
         # 'saleInfo' - not every book has a price so we cant nested search for it. Have to split into parent category then actual value
-        isEbook = item['saleInfo'].get('isEbook', {})
-        listPrice = item['saleInfo'].get('listPrice', {})
-        price = listPrice.get('amount', 'NA')
-        currencyType = listPrice.get('currencyCode', '')
+        saleInfo = item.get('saleInfo', {})
+        isEbook = saleInfo.get('isEbook', False)
 
+        listPrice = saleInfo.get('listPrice', {})
+        price = listPrice.get('amount', None)
+        currencyType = listPrice.get('currencyCode', 'N/A')
 
         # 'acccessInfo'
-        isEpub = item['accessInfo']['epub'].get('isAvailable', {})
-        isPDF = item['accessInfo']['pdf'].get('isAvailable', {})
+        acccessInfo = item.get('accessInfo', {})
+        isEpub = acccessInfo.get('epub', {}).get('isAvailable', False)
+        isPDF = acccessInfo.get('pdf', {}).get('isAvailable', False)
 
-        # printData()
-
-
-# #  Print some of the information returned (like book titles and authors)
-#     print("Books found:")
-#     for item in data['items']:
-#         volume_info = item.get("volumeInfo", {})
-
-#         title = item['volumeInfo'].get('title', 'No title available')
-#         authors = item['volumeInfo'].get('authors', ['No authors available'])
-#         # selfLink = item['selfLink'].get('selfLink', ['No self link avaliable'])
-#         description = volume_info.get("description", "No description available")
-#         print(f"Title: {title}")
-#         print(f"Authors: {', '.join(authors)}\n")
-#         # print(f"Self Link: {selfLink}\n")
-#         print(f"Description: {description}\n")
+        printData()
 else:
     print(f"Request failed with status code {response.status_code}")
 
