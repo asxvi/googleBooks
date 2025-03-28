@@ -20,4 +20,4 @@ def get_hit_count():
 @app.route('/')
 def hello():
     count = get_hit_count()
-    return f'Hello World! I have been seen {count} times.\n'
+    return f'This is changing dynamically and syncing thats kinda cool!\nHello from Docker! I have been seen {count} times.\n'
