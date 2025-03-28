@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: google_books_pg
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: booksdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+
+  # https://github.com/dbeaver/cloudbeaver/wiki/CloudBeaver-Enterprise-deployment-from-docker-compose
+  # pgAdmin vs cloudBeaver//dBeaver - decided pgAdmin for now
+  # https://www.pgadmin.org/docs/pgadmin4/9.1/container_deployment.html
+  pgAdmin:
+    image: dpage/pgadmin4
+    container_name: google_books_pgAdmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8888:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+

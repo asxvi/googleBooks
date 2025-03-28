@@ -2,9 +2,8 @@ import requests
 import pandas as pd
 import json
 from dotenv import load_dotenv
-
-
-load_dotenv()       # load .env
+import os
+    
 
 def printData():
     print(f"isbn: {isbn}")
@@ -13,7 +12,6 @@ def printData():
     print(f"Authors: {', ' .join(authors)}")
     print(f"Price: {price} {currencyType}")
     # print(f"Currency: {currencyType}")
-    
     print(f"date: {date}")
     print(f"pageCount: {pageCount}")
     print(f"eBook: {isEbook}")
@@ -22,60 +20,67 @@ def printData():
     print(f"selfLink: {selfLink}")
     print("\n")
 
-myKey = "AIzaSyDirSZjmIfQTvYgCnUZ0BhbIlrKRF8qxHw"
+load_dotenv()       
+api_key = os.getenv('GOOGLE_BOOKS_API_KEY')
 
-# define query #-- make function
-query = "data+engineering"
+# https://developers.google.com/books/docs/v1/using#st_params
+# "When creating a query, list search terms separated by a '+', in the form q=term1+term2_term3"
+query = ""
 author = ""
+startIndex = 0
+maxResults = 40
+i=0
+while startIndex <= 200:
+    url = (f"https://www.googleapis.com/books/v1/volumes?q={query}+inauthor:{author}&startIndex={startIndex}&maxResults={maxResults}&key={api_key}")
 
-url = (f"https://www.googleapis.com/books/v1/volumes?q={query}+inauthor:{author}&key={myKey}")
+    startIndex += maxResults
+    response = requests.get(url)
 
-response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
 
-if response.status_code == 200:
-    data = response.json()
+        # formatted as {kind, id, etag, selflink} and {volumeInfo/ , layerInfo/ , saleInfo/ , accessInfo/}
+        for item in data.get('items', 'No data on Item'):
+            i+=1
+            print(i)
+            
+            #.get() method is used to retrieve the value associated with a key in a dictionary.
+            # Safer than direct index ([]) bc it allows default rv if key not present
+            selfLink = item.get('selfLink', "N/A")
 
-    # formatted as {kind, id, etag, selflink} and {volumeInfo/ , layerInfo/ , saleInfo/ , accessInfo/}
-    for item in data.get('items', 'No data on Item'):
-        
-        #.get() method is used to retrieve the value associated with a key in a dictionary.
-        # Safer than direct index ([]) bc it allows default rv if key not present
-        selfLink = item.get('selfLink', "N/A")
+            # volumeInfo ** 
+            # struggling to flatten categories but want to add
+            
+            volumeInfo = item.get('volumeInfo', {})
 
-        # volumeInfo ** 
-         # struggling to flatten categories but want to add
-         
-        volumeInfo = item.get('volumeInfo', {})
+            title = volumeInfo.get('title', "N/A")
+            authors = volumeInfo.get('authors', [])
+            description = volumeInfo.get('description', "N/A")
+            date = volumeInfo.get('publishedDate', "N/A")
+            # categories = item.get('volumeInfo', {}).get('categories', {})
+            
+            industryIdentifier = volumeInfo.get('industryIdentifiers', {})
+            isbn = industryIdentifier[0].get('identifier', {}) if industryIdentifier else "N/A"
 
-        title = volumeInfo.get('title', "N/A")
-        authors = volumeInfo.get('authors', [])
-        description = volumeInfo.get('description', "N/A")
-        date = volumeInfo.get('publishedDate', "N/A")
-        # categories = item.get('volumeInfo', {}).get('categories', {})
-        
-        industryIdentifier = volumeInfo.get('industryIdentifiers', [])
-        isbn = industryIdentifier[0].get('identifier', {}) 
+            pageCount = volumeInfo.get('pageCount', None)
 
-        pageCount = volumeInfo.get('pageCount', None)
+            imageLinks = volumeInfo.get('imageLinks', {})
+            smallImage = imageLinks.get('thumbnail', "N/A")
+            largeImage = imageLinks.get('extraLarge', "N/A")
+            
+            # 'saleInfo' - not every book has a price so we cant nested search for it. Have to split into parent category then actual value
+            saleInfo = item.get('saleInfo', {})
+            isEbook = saleInfo.get('isEbook', False)
 
-        imageLinks = volumeInfo.get('imageLinks', "N/A")
-        smallImage = imageLinks.get('thumbnail', "N/A")
-        largeImage = imageLinks.get('extraLarge', "N/A")
+            listPrice = saleInfo.get('listPrice', {})
+            price = listPrice.get('amount', None)
+            currencyType = listPrice.get('currencyCode', 'N/A')
 
-        # 'saleInfo' - not every book has a price so we cant nested search for it. Have to split into parent category then actual value
-        saleInfo = item.get('saleInfo', {})
-        isEbook = saleInfo.get('isEbook', False)
+            # 'acccessInfo'
+            acccessInfo = item.get('accessInfo', {})
+            isEpub = acccessInfo.get('epub', {}).get('isAvailable', False)
+            isPDF = acccessInfo.get('pdf', {}).get('isAvailable', False)
 
-        listPrice = saleInfo.get('listPrice', {})
-        price = listPrice.get('amount', None)
-        currencyType = listPrice.get('currencyCode', 'N/A')
-
-        # 'acccessInfo'
-        acccessInfo = item.get('accessInfo', {})
-        isEpub = acccessInfo.get('epub', {}).get('isAvailable', False)
-        isPDF = acccessInfo.get('pdf', {}).get('isAvailable', False)
-
-        printData()
-else:
-    print(f"Request failed with status code {response.status_code}")
-
+            printData()
+    else:
+        print(f"Request failed with status code {response.status_code}")
