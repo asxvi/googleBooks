@@ -1,14 +1,9 @@
-# from nis import cat
-# from unicodedata import category
-# from warnings import catch_warnings
-# from flask import request
-from ctypes import sizeof
-# from itertools import count
 import requests
 import pandas as pd
 import json
 from dotenv import load_dotenv
 import os
+
     
 
 def printData():
